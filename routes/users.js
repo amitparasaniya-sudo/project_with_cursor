@@ -1,4 +1,5 @@
 const express = require('express');
+const rateLimit = require("express-rate-limit")
 const router = express.Router();
 const {
   registerUser,
@@ -14,10 +15,11 @@ const {
 } = require('../controllers/userController');
 
 const { protect, authorize } = require('../middleware/auth');
+const { authLimiter, passwordResetLimiter, apiLimiter } = require('../middleware/rateLimiter');
 
 // Public routes
 router.post('/register', registerUser);
-router.post('/login', loginUser);
+router.post('/login',apiLimiter, loginUser);
 router.post('/forgotpassword', forgotPassword);
 
 // Protected routes

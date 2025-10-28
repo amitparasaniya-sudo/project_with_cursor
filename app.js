@@ -62,3 +62,11 @@ if (!module.parent) {
     console.log(`API Base URL: http://localhost:${PORT}/api`);
   });
 }
+
+const date  = new Date()
+// const d2 = '2025-08-07'
+// console.log(new Date(d2).getTime());
+
+console.log(date)
+console.log(typeof date)
+console.log(date.toISOString())
