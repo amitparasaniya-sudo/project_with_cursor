@@ -1,6 +1,7 @@
 const User = require('../models/User');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
+const logger = require('../config/logger');
 
 // Generate JWT Token
 const generateToken = (id) => {
@@ -95,6 +96,7 @@ const loginUser = async (req, res) => {
 
     // Validate email & password
     if (!email || !password) {
+      logger.error("Please provide an email and password")
       return res.status(400).json({
         success: false,
         message: 'Please provide an email and password'
@@ -105,6 +107,7 @@ const loginUser = async (req, res) => {
     const user = await User.findByEmail(email).select('+password');
 
     if (!user) {
+      logger.error("user not found")
       return res.status(401).json({
         success: false,
         message: 'Invalid credentials'
@@ -113,6 +116,7 @@ const loginUser = async (req, res) => {
 
     // Check if account is locked
     if (user.isLocked) {
+      logger.error("Account is temporarily locked of user",{route:req.originalUrl})
       return res.status(401).json({
         success: false,
         message: 'Account is temporarily locked due to too many failed login attempts'
@@ -125,7 +129,7 @@ const loginUser = async (req, res) => {
     if (!isMatch) {
       // Increment login attempts
       await user.incLoginAttempts();
-      
+      logger.error("Invalid credentials")
       return res.status(401).json({
         success: false,
         message: 'Invalid credentials'
@@ -141,6 +145,7 @@ const loginUser = async (req, res) => {
     } else {
       await user.updateOne({ lastLogin: new Date() });
     }
+    logger.info("user login",{route:req.originalUrl})
 
     sendTokenResponse(user, 200, res);
   } catch (error) {
@@ -229,6 +234,7 @@ const getUser = async (req, res) => {
     const user = await User.findById(req.params.id).select('-password');
 
     if (!user) {
+      logger.error("user not found")
       return res.status(404).json({
         success: false,
         message: 'User not found'
@@ -237,11 +243,13 @@ const getUser = async (req, res) => {
 
     // Users can only access their own profile unless they're admin
     if (req.user.id !== user._id.toString() && req.user.role !== 'admin') {
+      logger.error("user not found")
       return res.status(403).json({
         success: false,
         message: 'Not authorized to access this user'
       });
     }
+    logger.info("user not found")
 
     res.status(200).json({
       success: true,

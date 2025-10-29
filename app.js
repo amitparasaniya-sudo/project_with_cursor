@@ -2,7 +2,9 @@ require('dotenv').config();
 const express = require('express');
 const bodyParser = require('body-parser');
 const cookieParser = require('cookie-parser');
-
+const logger = require('./config/logger');
+const fs =require("fs")
+const path = require("path")
 // Import database connection
 const connectDB = require('./config/database');
 
@@ -36,7 +38,9 @@ app.use('/api/users', users);
 
 // Error handling middleware
 app.use((err, req, res, next) => {
-  console.error(err.stack);
+  logger.error('Unhandled error', { stack: err.stack, message: err.message,
+    //  route: req.originalUrl 
+    });
   res.status(500).json({
     success: false,
     message: 'Something went wrong!',
@@ -58,15 +62,35 @@ module.exports = app;
 // Start server only if not in cluster mode
 if (!module.parent) {
   app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}__________`);
-    console.log(`API Base URL: http://localhost:${PORT}/api`);
+    logger.info(`Server is running on port ${PORT}`);
+    logger.info(`API Base URL: http://localhost:${PORT}/api`);
   });
 }
 
-const date  = new Date()
-// const d2 = '2025-08-07'
-// console.log(new Date(d2).getTime());
+// Remove debug date logs
 
-console.log(date)
-console.log(typeof date)
-console.log(date.toISOString())
+
+const filePath = path.join(__dirname,'middleware','file.txt')
+
+console.log(filePath);
+
+
+const readfile  = fs.createReadStream(filePath,{encoding:"utf-8"})
+
+
+
+readfile.on("data",(chunk)=>{
+  console.log("chunk",chunk)
+})
+
+readfile.on("end",()=>{
+  console.log('file read successfully');
+  
+})
+
+readfile.on('error', (err) => {
+  console.error('Error reading file:', err.message);
+});
+const write  = fs.createWriteStream('output.txt',{flags:'a'})
+
+readfile.pipe(write)
