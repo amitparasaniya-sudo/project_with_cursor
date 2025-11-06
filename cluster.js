@@ -52,19 +52,19 @@ if (cluster.isMaster) {
   process.on('SIGTERM', () => {
     console.log(`Worker ${process.pid} received SIGTERM, shutting down gracefully...`);
     server.close(() => {
-      process.exit(0);
+      // process.exit(0);
     });
   });
 
   // Handle uncaught exceptions
   process.on('uncaughtException', (err) => {
     console.error(`Worker ${process.pid} uncaught exception:`, err);
-    process.exit(1);
+    // process.exit(1);
   });
 
   // Handle unhandled promise rejections
   process.on('unhandledRejection', (reason, promise) => {
     console.error(`Worker ${process.pid} unhandled rejection at:`, promise, 'reason:', reason);
-    process.exit(1);
+    // process.exit(1);
   });
 }
