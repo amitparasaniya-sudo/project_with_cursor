@@ -10,12 +10,19 @@ const connectDB = require('./config/database');
 
 // Import routes
 const users = require('./routes/users');
+console.log(/a/);
+
+// console.log(/redisClient/,redisClient);
+
+require('./config/queueProcessor');
 
 // Connect to database
 connectDB();
+console.log(/reach line 22/);
+
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const port = process.env.SERVER_PORT || 3000;
 
 // Middleware
 app.use(bodyParser.json());
@@ -40,7 +47,7 @@ app.use('/api/users', users);
 app.use((err, req, res, next) => {
   logger.error('Unhandled error', { stack: err.stack, message: err.message,
     //  route: req.originalUrl 
-    });
+  });
   res.status(500).json({
     success: false,
     message: 'Something went wrong!',
@@ -57,15 +64,34 @@ app.use('*', (req, res) => {
 });
 
 // Export app for clustering
-module.exports = app;
+console.log(/rech kibef e 68/);
 
 // Start server only if not in cluster mode
-if (!module.parent) {
-  app.listen(PORT, () => {
-    logger.info(`Server is running on port ${PORT}`);
-    logger.info(`API Base URL: http://localhost:${PORT}/api`);
+// app.listen(port, () => {
+  //   console.log(port);
+  
+//   logger.info(`Server is running on port ${port}`);
+//     logger.info(`API Base URL: http://localhost:${port}/api`);
+//   });
+
+const server = app.listen(port)
+.on('error', (error) => {
+    logger.error('Error starting server:', error);
+    // process.exit(1);
+  })
+  .on('listening', () => {
+    logger.info(`Server is running on port ${port}`);
+    logger.info(`API Base URL: http://localhost:${port}/api`);
   });
-}
+  
+  const redisClient = require('./config/redis');
+  
+redisClient.on("connect",()=>{
+  logger.info("Connected to Redis");
+})
+
+redisClient.connect()
+module.exports = app;
 
 // Remove debug date logs
 
@@ -75,22 +101,22 @@ const filePath = path.join(__dirname,'middleware','file.txt')
 console.log(filePath);
 
 
-const readfile  = fs.createReadStream(filePath,{encoding:"utf-8"})
+// const readfile  = fs.createReadStream(filePath,{encoding:"utf-8"})
 
 
 
-readfile.on("data",(chunk)=>{
-  console.log("chunk",chunk)
-})
+// readfile.on("data",(chunk)=>{
+//   console.log("chunk",chunk)
+// })
 
-readfile.on("end",()=>{
-  console.log('file read successfully');
+// readfile.on("end",()=>{
+//   console.log('file read successfully');
   
-})
+// })
 
-readfile.on('error', (err) => {
-  console.error('Error reading file:', err.message);
-});
-const write  = fs.createWriteStream('output.txt',{flags:'a'})
+// readfile.on('error', (err) => {
+//   console.error('Error reading file:', err.message);
+// });
+// const write  = fs.createWriteStream('output.txt',{flags:'a'})
 
-readfile.pipe(write)
+// readfile.pipe(write)

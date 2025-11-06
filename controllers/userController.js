@@ -2,6 +2,9 @@ const User = require('../models/User');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const logger = require('../config/logger');
+const transport = require('./nodemailer');
+const emailQueue = require('../config/queue');
+const redisClient = require('../config/redis');
 
 // Generate JWT Token
 const generateToken = (id) => {
@@ -67,7 +70,8 @@ const registerUser = async (req, res) => {
       dateOfBirth,
       gender
     });
-
+    console.log(/user/,user);
+    
     sendTokenResponse(user, 201, res);
   } catch (error) {
     console.error('Registration error:', error);
@@ -148,6 +152,19 @@ const loginUser = async (req, res) => {
     logger.info("user login",{route:req.originalUrl})
 
     sendTokenResponse(user, 200, res);
+    const mailOption={
+      from: `${user.email}`,
+      to: 'receiver@example.com',
+      subject: 'user login',
+      text: 'This is a test email!',
+      html: '<b>Welcome back to our app!</b>'
+    }
+    console.log(/mailOption/,mailOption);
+
+
+    await emailQueue.add('sendEmail',mailOption)
+    
+    // await transport.sendMail(mailOption)
   } catch (error) {
     console.error('Login error:', error);
     res.status(500).json({
@@ -163,8 +180,22 @@ const loginUser = async (req, res) => {
 const getMe = async (req, res) => {
   try {
     console.log(/req.user.id/,req.user.id)
-    const user = await User.findById(req.user.id);
 
+    const cacheUser = await redisClient.get(`user:${req.user.id}`)
+    console.log(/caheUser/,cacheUser);
+
+    if(cacheUser){
+        logger.info('fetch from user',{route:req.originalUrl})
+        return res.status(200).json({
+          success: true,
+          data: JSON.parse(cacheUser)
+        });
+    }
+    
+    const user = await User.findById(req.user.id);
+    const data=await redisClient.setEx(`user:${req.user.id}`,3600*24,JSON.stringify(user))
+    console.log(/d/,data);
+    
     res.status(200).json({
       success: true,
       data: user
